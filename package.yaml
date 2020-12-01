@@ -29,6 +29,7 @@ dependencies:
   - mtl
   - vector
   - pointedlist
+  - template-haskell
 
 library:
   source-dirs: src
@@ -50,7 +51,7 @@ library:
     - DeriveFoldable
 
 executables:
-  aoc:
+  aoc-exe:
     main: Main.hs
     source-dirs: app
     ghc-options:
