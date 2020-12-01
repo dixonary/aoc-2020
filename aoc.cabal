@@ -4,16 +4,16 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c048de24b751a122b2e914acaa90bbd5e796a925ef6214118e4891baf487f88f
+-- hash: 45ec01856f2a543bcbb8d053ae9838398c21dc9ea5b02d3777f52d3cc0022e81
 
-name:           aoc-template
+name:           aoc
 version:        0.1.0.0
 description:    A template for Advent of Code projects in Haskell
-homepage:       https://github.com/samcoy3/advent-of-code-template#readme
-bug-reports:    https://github.com/samcoy3/advent-of-code-template/issues
-author:         Sam Coy
-maintainer:     samcoy3@gmail.com
-copyright:      2020 Sam Coy
+homepage:       https://github.com/dixonary/aoc-2020#readme
+bug-reports:    https://github.com/dixonary/aoc-2020/issues
+author:         Alex Dixon
+maintainer:     samcoy3+alexsaocsolutions@gmail.com
+copyright:      Alex Dixon
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -22,7 +22,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/samcoy3/advent-of-code-template
+  location: https://github.com/dixonary/aoc-2020
 
 library
   exposed-modules:
@@ -55,7 +55,7 @@ library
       Util.Parsers
       Util.Util
   other-modules:
-      Paths_aoc_template
+      Paths_aoc
   hs-source-dirs:
       src
   default-extensions: EmptyCase FlexibleContexts FlexibleInstances InstanceSigs MultiParamTypeClasses LambdaCase MultiWayIf RecordWildCards TupleSections OverloadedStrings ScopedTypeVariables GADTs NumericUnderscores DeriveFunctor DeriveFoldable
@@ -72,16 +72,16 @@ library
     , vector
   default-language: Haskell2010
 
-executable aoc-template-exe
+executable aoc
   main-is: Main.hs
   other-modules:
-      Paths_aoc_template
+      Paths_aoc
   hs-source-dirs:
       app
   default-extensions: EmptyCase FlexibleContexts FlexibleInstances InstanceSigs MultiParamTypeClasses LambdaCase MultiWayIf RecordWildCards TupleSections OverloadedStrings ScopedTypeVariables GADTs NumericUnderscores DeriveFunctor DeriveFoldable
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aoc-template
+      aoc
     , attoparsec
     , base >=4.7 && <5
     , containers
