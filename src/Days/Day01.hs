@@ -15,6 +15,8 @@ import qualified Program.RunDay as R (runDay)
 import Data.Attoparsec.Text
 import Data.Void
 
+import System.IO.Unsafe
+
 {- ORMOLU_ENABLE -}
 
 runDay :: Bool -> String -> IO ()
@@ -29,7 +31,7 @@ type Input = [Int]
 
 ------------ PART A ------------
 partA :: Input -> Int
-partA input = head 
+partA input = unsafePerformIO $ return $ head 
     [ x * y 
     | x <- input
     , y <- input
