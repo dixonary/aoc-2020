@@ -12,8 +12,14 @@ import qualified Data.Vector as Vec
 import qualified Util.Util as U
 
 import qualified Program.RunDay as R (runDay)
+import Control.Applicative
+import Control.Applicative.Combinators (many)
 import Data.Attoparsec.Text
 import Data.Void
+import Data.Functor
+import Data.Function ((&))
+import Control.Arrow ((>>>))
+import Debug.Trace
 {- ORMOLU_ENABLE -}
 
 runDay :: Bool -> String -> IO ()
@@ -21,15 +27,32 @@ runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------
 inputParser :: Parser Input
-inputParser = error "Not implemented yet!"
+inputParser = 
+  let 
+    line = many1 $ (char '#' $> True) <|> (char '.' $> False)
+  in line `sepBy1` endOfLine
 
 ------------ TYPES ------------
-type Input = Void
+type Input = [[Bool]]
 
 ------------ PART A ------------
-partA :: Input -> Void
-partA = error "Not implemented yet!"
+partA :: Input -> Int
+partA = trees 3 1
+
+trees :: Int -> Int -> [[Bool]] -> Int
+trees dx dy lines = let
+  lines' = lines
+         & (U.chunksOf dy >>> map head)
+         & fmap cycle
+  in length $ filter id $ [l !! (i*dx) | (i,l) <- zip [0..] $ lines']
+
 
 ------------ PART B ------------
-partB :: Input -> Void
-partB = error "Not implemented yet!"
+partB :: Input -> Int
+partB lines = product $ (\(a,b) -> trees a b lines) <$> 
+  [ (1,1)
+  , (3,1)
+  , (5,1)
+  , (7,1)
+  , (1,2)
+  ]
