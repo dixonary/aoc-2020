@@ -26,14 +26,12 @@ runDay = R.runDay inputParser partA partB
 inputParser :: Parser Input
 inputParser = let
     line = do
-      rowSig  <- replicateM 7 $ (char 'F' $> fst) <|> (char 'B' $> snd)
-      seatSig <- replicateM 3 $ (char 'L' $> fst) <|> (char 'R' $> snd)
+      rowSig  <- many1 $ (char 'F' $> 0) <|> (char 'B' $> 1)
+      seatSig <- many1 $ (char 'L' $> 0) <|> (char 'R' $> 1)
       let 
-        halveRow  seats r = r $ splitAt (length seats `div` 2) seats
-        halveSeat seats c = c $ splitAt (length seats `div` 2) seats
-        row  = foldl' halveRow  [0..127] rowSig
-        seat = foldl' halveSeat [0..7  ] seatSig
-      return $ head row * 8 + head seat
+        row  = foldl1' (\x y -> y + (x*2)) rowSig
+        seat = foldl1' (\x y -> y + (x*2)) seatSig
+      return $ row * 8 + seat
   in line `sepBy` endOfLine
 
 ------------ TYPES ------------
