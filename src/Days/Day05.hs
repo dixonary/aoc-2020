@@ -14,6 +14,9 @@ import qualified Util.Util as U
 import qualified Program.RunDay as R (runDay)
 import Data.Attoparsec.Text
 import Data.Void
+import Control.Applicative.Combinators ((<|>))
+import Control.Monad
+import Data.Functor
 {- ORMOLU_ENABLE -}
 
 runDay :: Bool -> String -> IO ()
@@ -21,15 +24,27 @@ runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------
 inputParser :: Parser Input
-inputParser = error "Not implemented yet!"
+inputParser = let
+    line = do
+      rowSig  <- replicateM 7 $ (char 'F' $> fst) <|> (char 'B' $> snd)
+      seatSig <- replicateM 3 $ (char 'L' $> fst) <|> (char 'R' $> snd)
+      let 
+        halveRow  seats r = r $ splitAt (length seats `div` 2) seats
+        halveSeat seats c = c $ splitAt (length seats `div` 2) seats
+        row  = foldl' halveRow  [0..127] rowSig
+        seat = foldl' halveSeat [0..7  ] seatSig
+      return $ head row * 8 + head seat
+  in line `sepBy` endOfLine
 
 ------------ TYPES ------------
-type Input = Void
+type Input = [Int]
 
 ------------ PART A ------------
-partA :: Input -> Void
-partA = error "Not implemented yet!"
+partA :: Input -> Int
+partA = maximum
 
 ------------ PART B ------------
-partB :: Input -> Void
-partB = error "Not implemented yet!"
+partB :: Input -> Int
+partB seatIds = head $ complement seatIds
+  where
+    complement ls = [minimum ls .. maximum ls] \\ ls

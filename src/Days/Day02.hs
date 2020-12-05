@@ -27,14 +27,14 @@ runDay = R.runDay inputParser partA partB
 inputParser :: Parser Input
 inputParser = do
   let line = do
-      min <- decimal
-      char '-'
-      max <- decimal
-      char ' '
-      val <- letter
-      string ": "
-      password <- many letter
-      return (min,max,val,password)
+        min <- decimal
+        char '-'
+        max <- decimal
+        char ' '
+        val <- letter
+        string ": "
+        password <- many letter
+        return (min,max,val,password)
   line `sepBy` endOfLine
 
 
