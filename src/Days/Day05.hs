@@ -25,14 +25,9 @@ runDay = R.runDay inputParser partA partB
 ------------ PARSER ------------
 inputParser :: Parser Input
 inputParser = let
-    line = do
-      rowSig  <- many1 $ (char 'F' $> 0) <|> (char 'B' $> 1)
-      seatSig <- many1 $ (char 'L' $> 0) <|> (char 'R' $> 1)
-      let 
-        row  = foldl1' (\x y -> y + (x*2)) rowSig
-        seat = foldl1' (\x y -> y + (x*2)) seatSig
-      return $ row * 8 + seat
-  in line `sepBy` endOfLine
+    seatId =  foldl1' (\x y -> y + (x*2))
+        <$> many1 ( ((char 'F' <|> char 'L') $> 0) <|> (letter $> 1) )
+  in seatId `sepBy` endOfLine
 
 ------------ TYPES ------------
 type Input = [Int]
