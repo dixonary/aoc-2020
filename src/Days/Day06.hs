@@ -21,15 +21,15 @@ runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------
 inputParser :: Parser Input
-inputParser = error "Not implemented yet!"
+inputParser = (many1 letter `sepBy` endOfLine) `sepBy` (count 2 endOfLine)
 
 ------------ TYPES ------------
-type Input = Void
+type Input = [[String]]
 
 ------------ PART A ------------
-partA :: Input -> Void
-partA = error "Not implemented yet!"
+partA :: Input -> Int
+partA = sum . fmap (length . Set.fromList . concat)
 
 ------------ PART B ------------
-partB :: Input -> Void
-partB = error "Not implemented yet!"
+partB :: Input -> Int
+partB = sum . fmap (length . foldl1' Set.intersection . fmap Set.fromList)
