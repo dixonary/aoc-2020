@@ -41,3 +41,6 @@ chunksOf n ls
   | length ls == 0 = []
   | length ls < n = [ls]
   | otherwise = (take n ls) : (chunksOf n (drop n ls))
+
+converge :: Eq a => (a -> a) -> a -> a
+converge = until =<< ((==) =<<)
