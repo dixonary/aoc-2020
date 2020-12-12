@@ -7,6 +7,7 @@ import Data.Functor ( ($>) )
 import qualified Program.RunDay as R (runDay)
 import Data.Attoparsec.Text
 import Data.Monoid
+import Data.Semigroup
 {- ORMOLU_ENABLE -}
 
 runDay :: Bool -> String -> IO ()
@@ -34,7 +35,7 @@ manhattan :: Coord -> Int
 manhattan (a,b) = abs (getSum a) + abs (getSum b)
 
 moveDir :: Coord -> Int -> Coord
-moveDir c d = mconcat $ replicate d c
+moveDir c d = stimes d c
 
 rot :: Coord -> Int -> Coord
 rot (x,y) amt = case (((fromIntegral amt `div` 90) `mod` 4) + 4) `mod` 4 of
