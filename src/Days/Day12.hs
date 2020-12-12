@@ -38,7 +38,7 @@ moveDir :: Coord -> Int -> Coord
 moveDir c d = stimes d c
 
 rot :: Coord -> Int -> Coord
-rot (x,y) amt = case (((fromIntegral amt `div` 90) `mod` 4) + 4) `mod` 4 of
+rot (x,y) amt = case (fromIntegral amt `div` 90) `mod` 4 of
   0 -> (x,y)
   1 -> (-y,x)
   2 -> (-x,-y)
