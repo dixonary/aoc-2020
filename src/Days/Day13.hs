@@ -50,5 +50,5 @@ partB (_,xs) = let
   restrict ns (ix,Just x) = 
       -- Replace our previous infinite list with one restricted to only the ones which are 
       -- also valid for our new input.
-      let (a:b:_) = take 2 $ filter (\n -> n `mod` x == ix `mod` x) ns in [a,b..]
+      let (a:b:_) = filter (\n -> n `mod` x == ix `mod` x) ns in [a,b..]
   in head $ foldl' restrict [0..] xs
