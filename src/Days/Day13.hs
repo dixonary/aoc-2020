@@ -43,12 +43,7 @@ partA (t,xs) = let
 ------------ PART B ------------
 partB :: Input -> Integer
 partB (_,xs) = let
-  -- Observation: All values we care about are prime (hence coprime).
-  -- This will not be a coincidence.
-  restrict :: [Integer] -> (Integer, Maybe Integer) -> [Integer]
   restrict ns (_,Nothing) = ns
   restrict ns (ix,Just x) = 
-      -- Replace our previous infinite list with one restricted to only the ones which are 
-      -- also valid for our new input.
-      let (a:b:_) = filter (\n -> n `mod` x == ix `mod` x) ns in [a,b..]
+      let (a:b:_) = filter (\n -> n `mod` x == (-ix) `mod` x) ns in [a,b..]
   in head $ foldl' restrict [0..] xs
