@@ -43,7 +43,5 @@ partA (t,xs) = let
 ------------ PART B ------------
 partB :: Input -> Integer
 partB (_,xs) = let
-  restrict ns (_,Nothing) = ns
-  restrict ns (ix,Just x) = 
-      let (a:b:_) = filter (\n -> n `mod` x == (-ix) `mod` x) ns in [a,b..]
-  in head $ foldl' restrict [0..] xs
+  restrict ns (ix,x) = let (a:b:_) = filter (\n -> (n+ix) `mod` x == 0) ns in [a,b..]
+  in head $ foldl' restrict [0..] $ mapMaybe sequence xs
