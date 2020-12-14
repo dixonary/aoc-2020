@@ -55,14 +55,18 @@ type Mask   = (Int64,Int64)
 ------------ PART A ------------
 partA :: Input -> Int64
 partA instrs = let
+  -- Set new mask
   line (Right mask') (mem,_) = (mem,mask')
+  -- Apply mask and set values in memory
   line (Left (i,v)) (mem,m@(m0,m1)) = (Map.insert i ((v .|. m1) .&. m0) mem, m)
   in sum $ Map.elems $ fst $ foldl' (&) (Map.empty,(0,0)) $ line <$> instrs  
 
 ------------ PART B ------------
 partB :: Input -> Int64
 partB instrs = let
+  -- Set new mask
   line (Right mask') (mem,_) = (mem,mask')
+  -- Apply mask and set values in memory
   line (Left (i,v)) (mem,m@(m0,m1)) = let
 
     -- All bits which are not 1 and not 0
