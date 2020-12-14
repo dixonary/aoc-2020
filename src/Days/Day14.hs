@@ -58,7 +58,7 @@ partA = sum . Map.elems . fst . foldl' (&) (Map.empty,(0,0)) . fmap line
   where
   -- Set new mask
   line (Right mask') (mem,_) = (mem,mask')
-  
+
   -- Apply mask and set values in memory
   line (Left (i,v)) (mem,m@(m0,m1)) = (Map.insert i ((v .|. m1) .&. m0) mem, m)
 
@@ -67,10 +67,10 @@ partB :: Input -> Int64
 partB = sum . Map.elems . fst . foldl' (&) (Map.empty,(0,0)) . fmap line
   where
   -- Set new mask
-  line' (Right mask') (mem,_) = (mem,mask')
+  line (Right mask') (mem,_) = (mem,mask')
 
   -- Apply mask and set values in memory
-  line' (Left (i,v)) (mem,m@(m0,m1)) = let
+  line (Left (i,v)) (mem,m@(m0,m1)) = let
 
     -- All bits which are not 1 and not 0
     fBits = complement m1 .&. m0
