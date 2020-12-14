@@ -54,20 +54,23 @@ type Mask   = (Int64,Int64)
 
 ------------ PART A ------------
 partA :: Input -> Int64
-partA instrs = let
+partA = sum . Map.elems . fst . foldl' (&) (Map.empty,(0,0)) . fmap line  
+  where
   -- Set new mask
   line (Right mask') (mem,_) = (mem,mask')
+  
   -- Apply mask and set values in memory
   line (Left (i,v)) (mem,m@(m0,m1)) = (Map.insert i ((v .|. m1) .&. m0) mem, m)
-  in sum $ Map.elems $ fst $ foldl' (&) (Map.empty,(0,0)) $ line <$> instrs  
 
 ------------ PART B ------------
 partB :: Input -> Int64
-partB instrs = let
+partB = sum . Map.elems . fst . foldl' (&) (Map.empty,(0,0)) . fmap line
+  where
   -- Set new mask
-  line (Right mask') (mem,_) = (mem,mask')
+  line' (Right mask') (mem,_) = (mem,mask')
+
   -- Apply mask and set values in memory
-  line (Left (i,v)) (mem,m@(m0,m1)) = let
+  line' (Left (i,v)) (mem,m@(m0,m1)) = let
 
     -- All bits which are not 1 and not 0
     fBits = complement m1 .&. m0
@@ -81,5 +84,3 @@ partB instrs = let
 
     -- Set the value at all floated addresses
     in (foldl' (\m i -> Map.insert i v m) mem faddrs, m)
-
-  in sum $ Map.elems $ fst $ foldl' (&) (Map.empty,(0,0)) $ line <$> instrs
