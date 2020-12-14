@@ -19,6 +19,7 @@ import Control.Applicative
 import Data.Functor
 import Control.Monad (foldM)
 import Data.Function
+import Data.Int (Int64)
 {- ORMOLU_ENABLE -}
 
 runDay :: Bool -> String -> IO ()
@@ -29,9 +30,9 @@ inputParser :: Parser Input
 inputParser = do
   let
     memset  = do
-      ix <- string "mem[" *> decimal <* string "] = "
-      val <- decimal
-      return $ \(mem,m@(m0,m1)) -> (Map.insert ix ((val .|. m1) .&. m0) mem,m)
+      i <- string "mem[" *> decimal <* string "] = "
+      v <- decimal
+      return $ Left (i,v)
 
     mask = do
       string "mask = "
@@ -41,18 +42,40 @@ inputParser = do
         take1 (Just 1) = 1; take1 _ = 0
         take0 (Just 0) = 0; take0 _ = 1
         num = foldl' (\acc x -> acc*2+ x) 0
-      return $ \(mem,_) -> (mem,(num $ take1 <$> ls, num $ take0 <$> ls))
+      return $ Right (num $ take0 <$> ls, num $ take1 <$> ls)
 
-  lines <- (memset <|> mask) `sepBy1` endOfLine
-  return $ fst $ foldl' (&) (Map.empty,(0,0)) lines 
+  (memset <|> mask) `sepBy1` endOfLine
 
 ------------ TYPES ------------
-type Input = Map Integer Integer
+type Input = [Either Memset Mask]
+
+type Memset = (Int64,Int64)
+type Mask   = (Int64,Int64)
 
 ------------ PART A ------------
-partA :: Input -> Integer
-partA = sum . Map.elems
+partA :: Input -> Int64
+partA instrs = let
+  line (Right mask') (mem,_) = (mem,mask')
+  line (Left (i,v)) (mem,m@(m0,m1)) = (Map.insert i ((v .|. m1) .&. m0) mem, m)
+  in sum $ Map.elems $ fst $ foldl' (&) (Map.empty,(0,0)) $ line <$> instrs  
 
 ------------ PART B ------------
-partB :: Input -> Void
-partB = error "Not implemented yet!"
+partB :: Input -> Int64
+partB instrs = let
+  line (Right mask') (mem,_) = (mem,mask')
+  line (Left (i,v)) (mem,m@(m0,m1)) = let
+
+    -- All bits which are not 1 and not 0
+    fBits = complement m1 .&. m0
+
+    -- :1 all the 1 bits in the mask, then :0 all floating bits in the mask
+    i' = (i .|. m1) .&. complement fBits
+
+    -- Compute the nondeterministic sums of all floating bits, and add base addr
+    floaters = sum <$> sequence [[0,2^i] | i <- [0..35], testBit fBits i]
+    faddrs   = fmap (+i') floaters
+
+    -- Set the value at all floated addresses
+    in (foldl' (\m i -> Map.insert i v m) mem faddrs, m)
+
+  in sum $ Map.elems $ fst $ foldl' (&) (Map.empty,(0,0)) $ line <$> instrs
