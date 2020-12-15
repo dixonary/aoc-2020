@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 module Days.Day15 (runDay) where
 
 {- ORMOLU_DISABLE -}
@@ -15,6 +16,13 @@ import qualified Program.RunDay as R (runDay)
 import Data.Attoparsec.Text
 import Data.Void
 import Debug.Trace
+
+import qualified Data.Vector.Unboxed.Mutable as MVec
+import Control.Monad.ST
+import Data.Int (Int)
+import Data.STRef
+import Control.Monad
+import Control.Arrow
 {- ORMOLU_ENABLE -}
 
 runDay :: Bool -> String -> IO ()
@@ -25,26 +33,31 @@ inputParser :: Parser Input
 inputParser = decimal `sepBy1` char ','
 
 ------------ TYPES ------------
-type Input = [Integer]
+type Input = [Int]
 
-num :: (Integer,Integer,Map Integer Integer) 
-    -> (Integer,Integer,Map Integer Integer)
-num (turn,x,mem) = case Map.lookup x mem of
-  Nothing -> (turn+1,0,Map.insert x turn mem)
-  Just t' -> (turn+1,turn-t',Map.insert x turn mem)
+nums :: Int -> Input -> Int
+nums nth input = runST $ do
+  nums <- MVec.replicate nth 0
+  num  <- newSTRef 0
 
-nums :: Int -> Input -> Integer
-nums nth input = let
-    seed = Map.fromList $ zip input [1..] 
-    getNum (_,x,_) = x
-    xs = zip [length input..] 
-       $ getNum <$> iterate num (fromIntegral $ length input,last input,seed)
-  in fromJust $ lookup nth xs
+  -- Insert first values
+  forM_ (zip input [1..]) $ \(num',turn') -> do
+    MVec.write nums num' turn'
+    writeSTRef num num'
+  
+  -- Insert rest
+  forM_ [length input + 1..nth] $ \turn -> do 
+    num' <- readSTRef num
+    last <- MVec.read nums num'
+    MVec.write nums num' (turn-1)
+    writeSTRef num $ if last == 0 then 0 else turn - last - 1
+
+  readSTRef num
 
 ------------ PART A ------------
-partA :: Input -> Integer
+partA :: Input -> Int
 partA = nums 2020
 
 ------------ PART B ------------
-partB :: Input -> Integer
+partB :: Input -> Int
 partB = nums 30_000_000
