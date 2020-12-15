@@ -2,27 +2,13 @@
 module Days.Day15 (runDay) where
 
 {- ORMOLU_DISABLE -}
-import Data.List
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
-import Data.Maybe
-import Data.Set (Set)
-import qualified Data.Set as Set
-import Data.Vector (Vector)
-import qualified Data.Vector as Vec
-import qualified Util.Util as U
-
 import qualified Program.RunDay as R (runDay)
 import Data.Attoparsec.Text
-import Data.Void
-import Debug.Trace
 
 import qualified Data.Vector.Unboxed.Mutable as MVec
-import Control.Monad.ST
-import Data.Int (Int)
-import Data.STRef
-import Control.Monad
-import Control.Arrow
+import Control.Monad.ST ( runST )
+import Data.STRef ( newSTRef, readSTRef, writeSTRef )
+import Control.Monad ( forM_ )
 {- ORMOLU_ENABLE -}
 
 runDay :: Bool -> String -> IO ()
