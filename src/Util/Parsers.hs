@@ -1,4 +1,4 @@
-module Util.Parsers (coordinateParser) where
+module Util.Parsers where
 
 import Data.Attoparsec.Text
 import Data.Map (Map)
@@ -23,3 +23,11 @@ coordinateParser mapper start = coordinateParser' start start
           return Map.empty
         ]
     addToMap mapper x y c = Map.alter (const (mapper c)) (x, y)
+
+-- Takes a parser and a separator. Parses one instance of the parser before the separator and one afterwards, returning the parsed values as a pair.
+around :: Parser a -> Parser b -> Parser (a, a)
+around p sep = do
+  a <- p
+  sep
+  b <- p
+  return (a, b)

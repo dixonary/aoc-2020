@@ -44,3 +44,9 @@ chunksOf n ls
 
 converge :: Eq a => (a -> a) -> a -> a
 converge = until =<< ((==) =<<)
+
+pairWith :: (a -> b) -> [a] -> [(a,b)]
+pairWith f = fmap (\x -> (x,f x))
+
+pair :: [a] -> [(a,a)]
+pair = pairWith id
