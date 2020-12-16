@@ -19,6 +19,7 @@ import Control.Monad
 import Debug.Trace
 import Data.Function
 import Data.Functor
+import Data.Bifunctor
 {- ORMOLU_ENABLE -}
 
 runDay :: Bool -> String -> IO ()
@@ -70,16 +71,17 @@ partB (allRanges,myTicket,nearby) = let
       let ranges = allRanges Map.! name
       in filter (all (`inOneOf` ranges) . (cols !!)) [0..length cols - 1]
 
-    -- At each step, take a value which is so far unassigned.
-    -- Note that we use the list monad here, in case there is 
-    -- more than one legal assignment [spoilers: there won't be]
-    match ass (name,poss) = poss \\ fmap snd ass <&> \ix -> (name,ix):ass
+    -- The below line is fun. Observations:
+    -- (1) The nth possibility list differs from the n-1th by ONE element.
+    -- (2) `zipWithM f a b` is `sequence . zipWith f a b`
+    -- So zipWithM takes the differences (one) at each index and gives
+    -- back the list of all such possible differences (hence, one list).
+    match res = head $ zipWithM (\\) res ([]:res)
 
-  in Map.keys allRanges          -- All field names
-    & U.pairWith possibles       -- Paired with possible assignments
-    & sortOn (length . snd)      -- Ordered by number of possibilities
-    & foldM match []             -- Take available assignment at each step
-    & head                       -- Take first such legal matching
+  in Map.keys allRanges                  -- All field names
+    & U.pairWith possibles               -- Paired with possible assignments
+    & sortOn (length . snd)              -- Ordered by number of possibilities
+    & uncurry zip . second match . unzip -- 'Fix' the possibilities, magically
     & filter (isInfixOf "departure" . fst)
-    & fmap ((myTicket !!) . snd) -- Lookup departure fields in my ticket
+    & fmap ((myTicket !!) . snd)         -- Lookup departure fields in ticket
     & product
