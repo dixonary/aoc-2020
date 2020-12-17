@@ -35,7 +35,7 @@ type Input = Chairs
 
 type Coord = (Int,Int)
 type Chairs = Map Coord Bool
-
+type NeighbourMap = Map Coord (Set Coord)
 
 totalOccupied :: Chairs -> Int
 totalOccupied = length . filter id . Map.elems
@@ -62,26 +62,26 @@ neighbours (x,y) c = length
 
 ------------ PART B ------------
 partB :: Input -> Int
-partB = totalOccupied . U.converge step'
+partB chairs = let ns = allNeighbours chairs 
+               in totalOccupied $ U.converge (step' ns) chairs
 
-step' :: Chairs -> Chairs
-step' c = foldl' update c (Map.keys c)
+step' :: NeighbourMap -> Chairs -> Chairs
+step' ns c = foldl' update c (Map.keys c)
   where
-    update m pos = case neighbours' pos c of
+    update m pos = case Set.size $ Set.filter (c Map.!) (ns Map.! pos) of
       0 -> Map.insert pos True m
       x | x >= 5 -> Map.insert pos False m
       _ -> m
-      
-neighbours' :: Coord -> Chairs -> Int
-neighbours' (x,y) c = length 
-  [ () 
-  | dir <- (,) <$> [-1..1] <*> [-1..1]
-  , dir /= (0,0)
-  , ray (x,y) dir c == Just True
-  ]
 
-size :: Chairs -> Int
-size c = let (ws,hs) = unzip $ Map.keys c in max (maximum ws) (maximum hs)
-
-ray :: Coord -> (Int,Int) -> Chairs -> Maybe Bool
-ray (x,y) (dx,dy) c = msum [Map.lookup (x+i*dx, y+i*dy) c | i <- [1..size c]] 
+allNeighbours :: Chairs -> NeighbourMap
+allNeighbours cs = Map.mapWithKey (\p _ -> findNeighbours p) cs
+  where 
+    size = let (ws,hs) = unzip $ Map.keys cs in max (maximum ws) (maximum hs)
+    
+    findNeighbours (x,y) = Set.fromList
+      [ c'
+      | (dx,dy) <- (,) <$> [-1..1] <*> [-1..1]
+      , (dx,dy) /= (0,0)
+      , c' <- maybeToList $ find (`Map.member` cs) $
+              [ c' | i <- [1..size], let c' = (x+i*dx, y+i*dy) ]
+      ]

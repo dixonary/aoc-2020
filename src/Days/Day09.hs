@@ -5,7 +5,6 @@ import Data.List
 
 import qualified Program.RunDay as R (runDay)
 import Data.Attoparsec.Text
-
 import Data.Foldable
 {- ORMOLU_ENABLE -}
 
@@ -17,10 +16,10 @@ inputParser :: Parser Input
 inputParser = decimal `sepBy` endOfLine
 
 ------------ TYPES ------------
-type Input = [Integer]
+type Input = [Int]
 
 ------------ PART A ------------
-partA :: Input -> Integer
+partA :: Input -> Int
 partA input = let 
     notInSums :: (Eq a, Num a) => a -> [a] -> Bool
     notInSums x xs = let xs'  = toList xs 
@@ -30,9 +29,9 @@ partA input = let
     in uncurry go $ splitAt 25 input
     
 ------------ PART B ------------
-partB :: Input -> Integer
+partB :: Input -> Int
 partB input = let 
   a = partA input
   weakness x = maximum x + minimum x
   in weakness $ head $ filter (\x -> sum x == a) 
-              $ concatMap inits $ tails input
+              $ concatMap tails $ inits input
