@@ -30,18 +30,14 @@ inputParser = (,)
                 <$> lookAhead (expr `sepBy1` endOfLine) 
                 <*>           (expr' `sepBy1` endOfLine) 
   where
-    term = decimal <|> between (char '(') (char ')') expr
+    term x = decimal <|> between (char '(') (char ')') x
     expr = do
-      first <- term
-      rest <- many $ do
-        (#) <- string " + " $> (+) <|> string " * " $> (*)
-        t <- term
-        return (# t)
+      first <- term expr
+      rest <- many $ (string " + " $> (+) <|> string " * " $> (*)) <*> term expr
       return $ foldl' (&) first rest
 
-    term'   = decimal <|> between (char '(') (char ')') expr'
-    clause' = fmap sum     $ (:) <$> term'   <*> many (string " + " >> term'  )
-    expr'   = fmap product $ (:) <$> clause' <*> many (string " * " >> clause')
+    clause' = sum     <$> term expr' `sepBy1` string " + "
+    expr'   = product <$> clause'    `sepBy1` string " * "
 
 ------------ TYPES ------------
 type Input = ([Integer],[Integer])
