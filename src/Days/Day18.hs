@@ -39,15 +39,9 @@ inputParser = (,)
         return (# t)
       return $ foldl' (&) first rest
 
-    term' = decimal <|> between (char '(') (char ')') expr'
-    clause' = do
-      first <- term'
-      rest <- many $ string " + " >> term'
-      return $ sum $ first:rest
-    expr' = do
-      first <- clause'
-      rest <- many $ string " * " >> clause'
-      return $ product $ first:rest
+    term'   = decimal <|> between (char '(') (char ')') expr'
+    clause' = fmap sum     $ (:) <$> term'   <*> many (string " + " >> term'  )
+    expr'   = fmap product $ (:) <$> clause' <*> many (string " * " >> clause')
 
 ------------ TYPES ------------
 type Input = ([Integer],[Integer])
