@@ -31,6 +31,7 @@ inputParser = (,)
                 <*>           (expr' `sepBy1` endOfLine) 
   where
     term x = decimal <|> between (char '(') (char ')') x
+    
     expr = do
       first <- term expr
       rest <- many $ (string " + " $> (+) <|> string " * " $> (*)) <*> term expr
