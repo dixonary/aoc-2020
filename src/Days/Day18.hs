@@ -14,6 +14,11 @@ import qualified Util.Util as U
 import qualified Program.RunDay as R (runDay)
 import Data.Attoparsec.Text
 import Data.Void
+import Control.Monad.Combinators (between)
+import Data.Functor
+import Control.Applicative
+import Data.Function
+import Data.Attoparsec.Combinator (lookAhead)
 {- ORMOLU_ENABLE -}
 
 runDay :: Bool -> String -> IO ()
@@ -21,15 +26,36 @@ runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------
 inputParser :: Parser Input
-inputParser = error "Not implemented yet!"
+inputParser = (,) 
+                <$> lookAhead (expr `sepBy1` endOfLine) 
+                <*>           (expr' `sepBy1` endOfLine) 
+  where
+    term = decimal <|> between (char '(') (char ')') expr
+    expr = do
+      first <- term
+      rest <- many $ do
+        (#) <- space *> (char '+' $> (+) <|> char '*' $> (*)) <* space
+        t <- term
+        return (# t)
+      return $ foldl' (&) first rest
+
+    term' = decimal <|> between (char '(') (char ')') expr'
+    clause' = do
+      first <- term'
+      rest <- many $ string " + " >> term'
+      return (first + sum rest)
+    expr' = do
+      first <- clause'
+      rest <- many $ string " * " >> clause'
+      return $ first * product rest
 
 ------------ TYPES ------------
-type Input = Void
+type Input = ([Integer],[Integer])
 
 ------------ PART A ------------
-partA :: Input -> Void
-partA = error "Not implemented yet!"
+partA :: Input -> Integer
+partA = sum . fst
 
 ------------ PART B ------------
-partB :: Input -> Void
-partB = error "Not implemented yet!"
+partB :: Input -> Integer
+partB = sum . snd
