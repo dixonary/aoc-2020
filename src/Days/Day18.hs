@@ -34,7 +34,7 @@ inputParser = (,)
     expr = do
       first <- term
       rest <- many $ do
-        (#) <- space *> (char '+' $> (+) <|> char '*' $> (*)) <* space
+        (#) <- string " + " $> (+) <|> string " * " $> (*)
         t <- term
         return (# t)
       return $ foldl' (&) first rest
@@ -43,11 +43,11 @@ inputParser = (,)
     clause' = do
       first <- term'
       rest <- many $ string " + " >> term'
-      return (first + sum rest)
+      return $ sum $ first:rest
     expr' = do
       first <- clause'
       rest <- many $ string " * " >> clause'
-      return $ first * product rest
+      return $ product $ first:rest
 
 ------------ TYPES ------------
 type Input = ([Integer],[Integer])
