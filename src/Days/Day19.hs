@@ -96,6 +96,7 @@ inputParser = do
  
   strs <- many1 (satisfy isAlpha) `sepBy1` endOfLine 
 
+  -- Replace certain productions for part B
   let rawRules' = rawRules
         & Map.insert 8  [Right [42], Right [42,8]]
         & Map.insert 11 [Right [42,31], Right [42,11,31]]
