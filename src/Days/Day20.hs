@@ -114,7 +114,7 @@ partB tiles = let
   isCornerOf fa fb t = isOuter (fa t) && isOuter (fb t) 
   [nwCorner] = filter (isCornerOf edgeN edgeW) $ rotations firstCorner 
 
-  -- We run this inside of ST just so we can eliminate tiles as we go.
+  -- STEP ONE: Complete the puzzle. --
   finishedPuzzle = runST $ do
     pieces <- newSTRef $ concatMap allConfigs tiles
 
@@ -139,7 +139,9 @@ partB tiles = let
     leftEdge <- populate edgeN edgeS nwCorner 
     mapM (populate edgeW edgeE) leftEdge
 
-  -- Remove borders from image.
+  -- STEP TWO: Construct the image. --
+
+  -- Remove borders from one (sub-)image.
   strip :: [[Bool]] -> [[Bool]]
   strip ts = ts & tail & init & fmap tail & fmap init
 
@@ -147,6 +149,8 @@ partB tiles = let
   puzzleImage = finishedPuzzle
     & fmap (fmap (image >>> strip) >>> transpose >>> fmap concat)
     & concat
+    
+  -- STEP THREE: Identify the sea monsters. --
 
   -- All rough patches in this orientation.
   roughSet :: Image -> Set (Int,Int)
