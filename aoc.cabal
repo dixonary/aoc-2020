@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f60fc7dbe204128f7cf0197864f933c3c29668193b5437a49a583206e0917934
+-- hash: 5432a74c551995d2e07aef763f6c2f30d0ac4be458e754cc5b70eda3b1f19fbf
 
 name:           aoc
 version:        0.1.0.0
@@ -64,11 +64,11 @@ library
     , base >=4.7 && <5
     , containers
     , directory
+    , monad-loops
     , mtl
     , optparse-applicative
     , parser-combinators
     , pointedlist
-    , tardis
     , template-haskell
     , text
     , vector
@@ -88,11 +88,11 @@ executable aoc-exe
     , base >=4.7 && <5
     , containers
     , directory
+    , monad-loops
     , mtl
     , optparse-applicative
     , parser-combinators
     , pointedlist
-    , tardis
     , template-haskell
     , text
     , vector

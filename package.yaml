@@ -30,7 +30,7 @@ dependencies:
   - vector
   - pointedlist
   - template-haskell
-  - tardis
+  - monad-loops
 
 library:
   source-dirs: src

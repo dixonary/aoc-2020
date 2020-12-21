@@ -17,7 +17,7 @@ runDay = R.runDay inputParser partA partB
 ------------ PARSER ------------
 inputParser :: Parser Input
 inputParser = (,) 
-                <$> lookAhead (expr `sepBy1` endOfLine) 
+                <$> lookAhead (expr  `sepBy1` endOfLine) 
                 <*>           (expr' `sepBy1` endOfLine) 
   where
     term x = decimal <|> between (char '(') (char ')') x
@@ -33,9 +33,12 @@ inputParser = (,)
 ------------ TYPES ------------
 type Input = ([Integer],[Integer])
 
+instance {-# OVERLAPS #-} Show [Integer] where
+  show = unlines . fmap show
+
 ------------ PART A ------------
-partA :: Input -> Integer
-partA = sum . fst
+partA :: Input -> [Integer]
+partA = fst
 
 ------------ PART B ------------
 partB :: Input -> Integer
