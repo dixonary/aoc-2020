@@ -10,22 +10,23 @@ import qualified Data.Set as Set
 import Data.Vector (Vector)
 import qualified Data.Vector as Vec
 import qualified Util.Util as U
+import qualified Util.Parsers as U
 
 import qualified Program.RunDay as R (runDay)
 import Data.Attoparsec.Text hiding (take)
-import Data.Void
-import Data.Functor
+
+import Data.Functor ( ($>) )
 import Control.Applicative
-import Data.Function
+import Data.Function ( (&) )
 import Control.Arrow
 
-import Data.Vector.Mutable (STVector)
-import qualified Data.Vector.Mutable as MVec
-import Control.Monad.ST (runST)
+import Control.Monad.ST (ST, runST)
 import Data.STRef
 import Control.Monad (unless, when)
-import Control.Monad.Loops
-import Debug.Trace
+import Control.Monad.Loops ( unfoldrM )
+import Data.Bool ( bool )
+import qualified Data.Text as Text
+import Data.Bifunctor
 {- ORMOLU_ENABLE -}
 
 runDay :: Bool -> String -> IO ()
@@ -35,140 +36,148 @@ runDay = R.runDay inputParser partA partB
 inputParser :: Parser Input
 inputParser = let
     tile = do
-      string "Tile "
-      i <- decimal 
-      string ":"
+      tileId <- string "Tile " *> decimal <* string ":" 
       endOfLine 
-      rows <- many1 (char '#' $> 1 <|> char '.' $> 0) `sepBy1` endOfLine 
-      let
-        edgeBits = [head rows, last <$> rows, last rows, reverse $ head <$> rows]
-
-      return $ Tile i edgeBits rows
-         
-  in tile `sepBy1` (endOfLine >> endOfLine)
+      image <- many1 (char '.' $> False <|> char '#' $> True) `sepBy1` endOfLine 
+      return $ mkTile tileId image
+  in tile `sepBy1` count 2 endOfLine
 
 ------------ TYPES ------------
 type Input = [Tile]
 
-type Edge = [Int]
+type Image = [[Bool]]
+
+renderImage :: Image -> String
+renderImage = unlines . fmap (map (bool '.' '#'))
+
+instance {-# OVERLAPS #-} Show [[Bool]] where
+  show = ('\n' : ) . renderImage
+
+mkTile :: Int -> [[Bool]] -> Tile
+mkTile tileId image = let
+  fromBits = foldl' (\x y -> x*2+fromEnum y) 0
+  edges = fromBits <$> [head image, last <$> image, last image, head <$> image]
+  in Tile{..}
 
 data Tile = Tile 
-  { tileId :: Integer
-  , edges :: [Edge]
-  , image :: [[Int]]
-  } deriving (Show)
+  { tileId :: Int 
+  , edges :: [Int]
+  , image :: [[Bool]]
+  }
+  deriving (Show, Eq)
 
-instance Eq Tile  where (==) = (==) `on` tileId
-instance Ord Tile where compare = compare `on` tileId
+flipTile :: Tile -> Tile
+flipTile Tile{..} = mkTile tileId $ flipImage image
 
--- instance Show Tile where 
---   show Tile{..} = "Tile "++show tileId++":\n"++ show image
+rotations :: Tile -> [Tile]
+rotations = let 
+  rotate Tile{..} = mkTile tileId $ rotateImage image
+  in take 4 . iterate rotate
 
-edgeN, edgeE, edgeS, edgeW :: Tile -> Edge
+-- Rotate 90 degrees. (No idea which direction)
+rotateImage :: Image -> Image
+rotateImage = transpose . reverse
+
+-- Flip around the vertical axis.
+flipImage :: Image -> Image
+flipImage = fmap reverse
+    
+allConfigs :: Tile -> [Tile]
+allConfigs t = concatMap rotations [t,flipTile t]
+
+corners :: [Tile] -> [Tile]
+corners tiles = let
+  edgeCounts = U.freq $ tiles >>= allConfigs >>= edges
+  isOuter e = edgeCounts Map.! e == 4
+  isCorner Tile{..} = length (filter isOuter edges) == 2
+
+  in nub $ filter isCorner tiles
+
+edgeN, edgeE, edgeS, edgeW :: Tile -> Int 
 edgeN Tile{..} = edges !! 0
 edgeE Tile{..} = edges !! 1
 edgeS Tile{..} = edges !! 2
 edgeW Tile{..} = edges !! 3
 
-instance {-# OVERLAPS #-} Show [[Int]] where
-  show = ("\n"++) . unlines . fmap (fmap (\case {0 -> '.'; 1 -> '#'}))
-
-rotations :: Tile -> [Tile]
-rotations t = take 4 $ flip iterate t $
-  \t@Tile{..} -> t
-      { edges = let [n,e,s,w] = edges in [reverse w, n, reverse e, s]
-      , image = transpose $ reverse image
-      }
-
-flipTile :: Tile -> Tile
-flipTile t = t 
-    { edges = let [n,e,s,w] = edges t in [reverse n, w, reverse s, e]
-    , image = fmap reverse (image t)
-    }
-      
-stripped :: [[Int]] -> [[Int]]
-stripped = init >>> tail >>> fmap init >>> fmap tail
-
-
 ------------ PART A ------------
-partA :: Input -> Integer
-partA tiles = let
-  allEdges = concatMap (\x -> [x,reverse x]) $ concatMap edges tiles
-  edgeFreqs = U.freq allEdges
-  singleton e = edgeFreqs Map.! e == 1
-  isCorner Tile{..} = length (filter id (singleton <$> edges)) == 2
-
-  in product $ tileId <$> filter isCorner tiles
+partA :: Input -> Int
+partA tiles = product $ tileId <$> corners tiles
 
 ------------ PART B ------------
-partB :: Input -> [[Tile]]
+partB :: Input -> Int
 partB tiles = let
+  firstCorner:_ = corners tiles
+  
+  -- Given the first corner, rotate it so that it is the northwest corner.
+  edgeCounts = U.freq $ tiles >>= allConfigs >>= edges
+  isOuter e = edgeCounts Map.! e == 4
+  isCornerOf fa fb t = isOuter (fa t) && isOuter (fb t) 
+  [nwCorner] = filter (isCornerOf edgeN edgeW) $ rotations firstCorner 
 
-  -- Shorthands for detecting edges and corners (borrowed from part A)
-  allEdges = concatMap (\x -> [x,reverse x]) $ concatMap edges tiles
-  edgeFreqs = U.freq allEdges
-  singleton e = edgeFreqs Map.! e == 1
-  isCorner Tile{..} = length (filter id (singleton <$> edges)) == 2
+  -- We run this inside of ST just so we can eliminate tiles as we go.
+  finishedPuzzle = runST $ do
+    pieces <- newSTRef $ concatMap allConfigs tiles
 
-  firstCorner = fromJust $ find isCorner tiles
-  [cornerNW]  = filter (\t -> singleton (edgeW t) && singleton (edgeN t)) 
-              $ rotations firstCorner
+    let 
+      deleteTile t = modifySTRef pieces (filter (\t' -> tileId t' /= tileId t))
 
-  solvedJigsaw :: [[Tile]]
-  solvedJigsaw = runST $ do
-    jigsaw <- newSTRef []
-    pieces <- newSTRef $ Set.fromList tiles
+      -- Find the single tile which fits alongisde the given edge value.
+      findNext edgeVal edgeF = do
+        pieces' <- readSTRef pieces
+        case find (\t -> edgeF t == edgeVal) pieces' of
+          Nothing -> return Nothing 
+          Just t  -> deleteTile t >> return (Just t)
 
-    currentRow <- newSTRef [cornerNW]
+      -- Given a seed value, construct a complete line of the puzzle.
+      populate newTileF oldTileF startTile = let
+        getNext val = fmap (\x -> (x,oldTileF x)) <$> findNext val newTileF
+        newTiles = unfoldrM getNext $ oldTileF startTile
+        in (startTile :) <$> newTiles
 
-    -- Remove the tile with a given ID.
-    let deleteTile t = modifySTRef pieces $
-                      Set.filter (\t' -> tileId t' /= tileId t)
+    deleteTile nwCorner
 
-    deleteTile cornerNW
+    leftEdge <- populate edgeN edgeS nwCorner 
+    mapM (populate edgeW edgeE) leftEdge
 
-    -- Add row until piece set empty
-    let fillJigsaw = do
-          currentRow' <- trace "Row!" <$> readSTRef currentRow
-          when (null currentRow') (void addLeftEdge)
+  -- Remove borders from image.
+  strip :: [[Bool]] -> [[Bool]]
+  strip ts = ts & tail & init & fmap tail & fmap init
 
-          -- Place pieces in the row until we place a piece with no matching 
-          -- east side. (Note: this is probably slow!)
-          lastPiece <- iterateUntil (singleton . edgeE) addNextPiece
+  -- Construct total image from grid of sub-images
+  puzzleImage = finishedPuzzle
+    & fmap (fmap (image >>> strip) >>> transpose >>> fmap concat)
+    & concat
 
-          -- Store row into jigsaw and clear it
-          currentRow' <- readSTRef currentRow 
-          modifySTRef jigsaw (++ [currentRow']) 
-          writeSTRef currentRow []
-          
-          -- Check if we just placed then last piece on last row,
-          -- and if we didn't then run the row procedure again
-          unless (singleton $ edgeS lastPiece) fillJigsaw
+  -- All rough patches in this orientation.
+  roughSet :: Image -> Set (Int,Int)
+  roughSet image = let
+    imageText  = Text.pack $ renderImage image
+    isRough = \case {'#' -> Just (); _ -> Nothing }
+    Right roughMap = parseOnly (U.coordinateParser isRough 0) imageText
+    in Set.fromList $ Map.keys roughMap
 
-        -- Get the oriented correct piece for a given hole.
-        takePiece edgeFunc e  = do
-          pieces' <- readSTRef pieces
-          let 
-            -- Find all tiles in any flip/rotation which fit in the given hole.
-            -- THERE SHOULD ALWAYS BE EXACTLY ONE.
-            [tile] = pieces'
-                & concatMap (\x -> [x,flipTile x])
-                & concatMap rotations
-                & filter (\x -> edgeFunc x == e)
-                & traceShowId
-          deleteTile tile
-          return tile
+  seaMonsterOffsets :: Set (Int, Int)
+  seaMonsterOffsets = Set.fromList
+    [                                                                         (18,0)
+    , (0,1)     ,     (5,1),(6,1)     ,      (11,1),(12,1)      ,      (17,1),(18,1),(19,1)
+    ,      (1,2),(4,2)     ,     (7,2),(10,2)      ,      (13,2),(16,2)
+    ]
 
-        addPiece edgeVal edgeFunc = do
-          tile <- edgeVal >>= takePiece edgeFunc
-          modifySTRef currentRow (++[tile])
-          return tile
+  seaMonsterPositions :: Image -> Set (Int,Int)
+  seaMonsterPositions image = let
+    rough = roughSet image
+    (minX,maxX) = (minimum &&& maximum) $ Set.map fst rough
+    (minY,maxY) = (minimum &&& maximum) $ Set.map snd rough
+    smTopLefts = (,) <$> [minX..maxX] <*> [minY..maxY]
+    monsterAtOffset (x,y) = Set.map (bimap (+x) (+y)) seaMonsterOffsets
+    seaMonsters = monsterAtOffset <$> smTopLefts
+    trueSeaMonsters = filter (`Set.isSubsetOf` rough) seaMonsters
+    in Set.unions trueSeaMonsters
 
-        addLeftEdge  = addPiece (edgeS . head . last <$> readSTRef jigsaw) edgeN
-        addNextPiece = addPiece (edgeE . last <$> readSTRef currentRow)    edgeW
-
-    fillJigsaw
-
-    readSTRef jigsaw
-
-  in solvedJigsaw
+  allSeaMonsterPositions :: Set (Int,Int)
+  allSeaMonsterPositions = [puzzleImage, flipImage puzzleImage]
+                         & concatMap (take 4 . iterate rotateImage) 
+                         & fmap seaMonsterPositions
+                         & Set.unions -- Only one will be nonempty
+  
+  in Set.size (roughSet puzzleImage) - Set.size allSeaMonsterPositions
