@@ -1,8 +1,8 @@
 {-# LANGUAGE TypeApplications #-}
-module Days.Day15 (runDay) where
+module Days.Day15 (runDay, ) where
 
 {- ORMOLU_DISABLE -}
-import qualified Program.RunDay as R (runDay)
+import qualified Program.RunDay as R (runDay, DayRunner)
 import Data.Attoparsec.Text
 
 import qualified Data.Vector.Unboxed.Mutable as MVec
@@ -11,7 +11,7 @@ import Data.STRef ( newSTRef, readSTRef, writeSTRef )
 import Control.Monad ( forM_ )
 {- ORMOLU_ENABLE -}
 
-runDay :: Bool -> String -> IO ()
+runDay :: Bool -> String -> IO (Maybe Double, Maybe Double)
 runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------

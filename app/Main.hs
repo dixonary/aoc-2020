@@ -35,6 +35,12 @@ import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
 import Options.Applicative
 import Text.Printf (printf)
+import Control.Monad (forM_, forM, replicateM_, replicateM)
+import Control.Arrow
+import qualified Util.Util as U
+import Data.Bifunctor
+import System.Console.ANSI
+import Data.List
 
 data Days
   = AllDays
@@ -48,46 +54,32 @@ type Verbosity = Bool
 
 data Options = Options Days Verbosity
 
-validate :: Int -> Maybe Int
-validate n = if (n `elem` Map.keys days) then (Just n) else Nothing
-
 dayParser :: Parser Days
 dayParser = (OneDay <$> day <*> input) <|> allDays
   where
-    day =
-      option
-        auto
-        ( long "day"
-            <> short 'd'
-            <> metavar "DAY"
-            <> help "Choose a day to print the solutions for. Omitting this option will print out all days."
-        )
-    input =
-      optional $
-        strOption
-          ( long "input"
-              <> short 'i'
-              <> metavar "FILE"
-              <> help "The file to read the selected day's input from."
-          )
-    allDays =
-      flag'
-        AllDays
-        ( long "all-days"
-            <> help "Present solutions for all of the days of Advent of Code, with default input file names."
-        )
+    day = option auto $
+      long "day" <> short 'd' <> metavar "DAY"
+      <> help (unwords ["Present the solutions for one day."])
+
+    input = optional $ strOption $
+      long "input" <> short 'i' <> metavar "FILE"
+      <> help "The file to read the selected day's input from."
+
+    allDays = flag' AllDays $
+      long "all-days"
+      <> help (unwords ["Present solutions for all of the days of"
+                       ,"Advent of Code, with default input file names."])
 
 optionsParser :: Parser Options
 optionsParser = Options <$> dayParser <*> verbosityParser
   where
-    verbosityParser =
-      switch
-        ( long "verbosity"
-            <> short 'v'
-            <> help "Whether to print out extra info, such as the result of the input parser, and more detailed error messages."
-        )
+    verbosityParser = switch $ 
+      long "verbosity" <> short 'v'
+      <> help (unwords ["Whether to print out extra info, such as the result of"
+                       ,"the input parser, and more detailed error messages."])
+        
 
-days :: Map Int (Bool -> String -> IO (), String)
+days :: Map Int (Bool -> String -> IO (Maybe Double, Maybe Double), String)
 days =
   Map.fromList . zip [1 ..] $
     [ (Day01.runDay, "input/Day01.txt"),
@@ -119,28 +111,53 @@ days =
 
 performDay :: Options -> IO ()
 performDay (Options d v) = case d of
-  AllDays ->
-    sequence_ $
-      fmap
-        ( \(d, (a, i)) -> do
-            putStrLn $ "\n***Day " ++ (printf "%02d" d) ++ "***"
-            a v i
-        )
-        (Map.toList days)
-  OneDay {..} ->
-    let action = (validate day >>= (days Map.!?))
-     in case action of
-          Nothing -> putStrLn "Invalid day provided. There are 25 days in Advent."
-          Just (d, i) -> do
-            let i' = fromMaybe i input
-            putStrLn $ "\n***Day " ++ (printf "%02d" day) ++ "***"
-            d v i'
-            putStrLn "************"
+  AllDays -> do
+      results <- let 
+        day d (a,i) = do
+          setSGR [SetColor Foreground Vivid Magenta]
+          putStrLn $ "\n***Day " ++ printf "%02d" d ++ "***"
+          setSGR [SetDefaultColor Foreground]
+          a v i
+        in sequence $ Map.mapWithKey day days
+      
+      putStrLn "\n************\n  Summary:"
+
+      let parts = uncurry (++) $ bimap 
+            (Map.toList . Map.mapKeys ((++ " (a)") . printf "%02d"))
+            (Map.toList . Map.mapKeys ((++ " (b)") . printf "%02d"))
+            $ (Map.map fst &&& Map.map snd) results
+
+          fails = [p | (p,Nothing) <- parts]
+          fasts = [(p,t) | (p,Just t) <- parts , t <  1]
+          slows = [(p,t) | (p,Just t) <- parts , t >= 1]
+
+      putStrLn ""
+      putStr           $ show (length fasts) ++ " parts "
+      withColor Green  $ putStr "completed in under 1 second"
+      putStrLn          ".\nOf the remainder:"
+      putStr           $ printf "  %d parts" $ length fails
+      withColor Red    $ putStr " failed"
+      putStrLn         $ ":\n    " ++ intercalate ", " fails
+      putStr           $ printf "  %d parts" $ length slows
+      withColor Yellow $ putStr " took over 1 second to complete"
+      putStrLn ":"
+      forM_ slows $ \(p,t) -> putStrLn $ printf "    %s took %.2f seconds" p t
+
+
+  OneDay {..} -> case days Map.!? day of
+    Nothing -> putStrLn "Invalid day provided. There are 25 days in Advent."
+    Just (d, i) -> do
+      let i' = fromMaybe i input
+      withColor Magenta $ putStrLn $ "\n***Day " ++ printf "%02d" day ++ "***"
+      d v i'
+      putStrLn "************"
+
+withColor :: Color -> IO () -> IO ()
+withColor c m = setSGR [SetColor Foreground Vivid c] >> m >> setSGR [SetDefaultColor Foreground]
 
 main :: IO ()
 main = performDay =<< execParser opts
   where
-    opts =
-      info
-        (optionsParser <**> helper)
-        (fullDesc <> progDesc "Prints out some Advent of Code solutions.")
+    opts = info
+      (optionsParser <**> helper)
+      (fullDesc <> progDesc "Prints out some Advent of Code solutions.")

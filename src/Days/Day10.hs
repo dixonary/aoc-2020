@@ -1,11 +1,11 @@
-module Days.Day10 (runDay) where
+module Days.Day10 (runDay, ) where
 
 {- ORMOLU_DISABLE -}
 import Data.List
 import qualified Data.Vector as Vec
 import qualified Data.Map as Map
 
-import qualified Program.RunDay as R (runDay)
+import qualified Program.RunDay as R (runDay, DayRunner)
 import Data.Attoparsec.Text
 
 import Control.Monad
@@ -14,7 +14,7 @@ import Control.Monad.ST
 import qualified Data.Vector.Mutable as MVec
 {- ORMOLU_ENABLE -}
 
-runDay :: Bool -> String -> IO ()
+runDay :: Bool -> String -> IO (Maybe Double, Maybe Double)
 runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------

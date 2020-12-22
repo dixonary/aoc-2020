@@ -12,7 +12,7 @@ import qualified Data.Vector as Vec
 import qualified Util.Util as U
 import qualified Util.Parsers as U
 
-import qualified Program.RunDay as R (runDay)
+import qualified Program.RunDay as R (runDay, DayRunner)
 import Data.Attoparsec.Text hiding (take)
 
 import Data.Functor ( ($>) )
@@ -29,7 +29,7 @@ import qualified Data.Text as Text
 import Data.Bifunctor
 {- ORMOLU_ENABLE -}
 
-runDay :: Bool -> String -> IO ()
+runDay :: Bool -> String -> IO (Maybe Double, Maybe Double)
 runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------

@@ -8,7 +8,7 @@ import qualified Data.Map.Strict as Map
 import qualified Util.Util as U
 import qualified Util.Parsers as U
 
-import qualified Program.RunDay as R (runDay)
+import qualified Program.RunDay as R (runDay, DayRunner)
 import Data.Attoparsec.Text
 import Data.Void
 import Control.Applicative
@@ -22,7 +22,7 @@ import Data.Function
 import Control.Arrow ((>>>))
 {- ORMOLU_ENABLE -}
 
-runDay :: Bool -> String -> IO ()
+runDay :: R.DayRunner
 runDay = R.runDay inputParser partA partB
 
 

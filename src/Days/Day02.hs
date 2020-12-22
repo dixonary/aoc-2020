@@ -11,7 +11,7 @@ import Data.Vector (Vector)
 import qualified Data.Vector as Vec
 import qualified Util.Util as U
 
-import qualified Program.RunDay as R (runDay)
+import qualified Program.RunDay as R (runDay, DayRunner)
 import Data.Attoparsec.Text
 import Data.Void
 {- ORMOLU_ENABLE -}
@@ -20,7 +20,7 @@ import Data.Functor
 import Control.Applicative.Combinators hiding (sepBy)
 import Data.Bits
 
-runDay :: Bool -> String -> IO ()
+runDay :: Bool -> String -> IO (Maybe Double, Maybe Double)
 runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------

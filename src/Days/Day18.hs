@@ -8,10 +8,10 @@ import Data.List ( foldl' )
 import Data.Attoparsec.Text
 import Data.Attoparsec.Combinator (lookAhead)
 import Control.Monad.Combinators (between)
-import qualified Program.RunDay as R (runDay)
+import qualified Program.RunDay as R (runDay, DayRunner)
 {- ORMOLU_ENABLE -}
 
-runDay :: Bool -> String -> IO ()
+runDay :: Bool -> String -> IO (Maybe Double, Maybe Double)
 runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------
@@ -37,8 +37,8 @@ instance {-# OVERLAPS #-} Show [Integer] where
   show = unlines . fmap show
 
 ------------ PART A ------------
-partA :: Input -> [Integer]
-partA = fst
+partA :: Input -> Integer
+partA = sum . fst
 
 ------------ PART B ------------
 partB :: Input -> Integer

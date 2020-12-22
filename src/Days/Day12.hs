@@ -1,16 +1,16 @@
-module Days.Day12 (runDay) where
+module Days.Day12 (runDay, ) where
 
 {- ORMOLU_DISABLE -}
 import Data.List ( foldl' )
 import Data.Functor ( ($>) )
 
-import qualified Program.RunDay as R (runDay)
+import qualified Program.RunDay as R (runDay, DayRunner)
 import Data.Attoparsec.Text
 import Data.Monoid
 import Data.Semigroup
 {- ORMOLU_ENABLE -}
 
-runDay :: Bool -> String -> IO ()
+runDay :: Bool -> String -> IO (Maybe Double, Maybe Double)
 runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------

@@ -9,7 +9,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Foldable (toList)
 
-import qualified Program.RunDay as R (runDay)
+import qualified Program.RunDay as R (runDay, DayRunner)
 import Data.Attoparsec.Text
 import Control.Applicative.Combinators ( sepEndBy1 )
 
@@ -17,7 +17,7 @@ import Control.Monad.State
 import Control.Monad.Loops ( iterateUntilM )
 {- ORMOLU_ENABLE -}
 
-runDay :: Bool -> String -> IO ()
+runDay :: Bool -> String -> IO (Maybe Double, Maybe Double)
 runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------

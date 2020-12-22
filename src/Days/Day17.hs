@@ -7,12 +7,12 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
 import qualified Util.Parsers as U
-import qualified Program.RunDay as R (runDay)
+import qualified Program.RunDay as R (runDay, DayRunner)
 import Data.Attoparsec.Text ( Parser )
 import Data.Bool ( bool )
 {- ORMOLU_ENABLE -}
 
-runDay :: Bool -> String -> IO ()
+runDay :: Bool -> String -> IO (Maybe Double, Maybe Double)
 runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------
