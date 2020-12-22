@@ -9,6 +9,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Vector (Vector)
 import qualified Data.Vector as Vec
+import Data.Bifunctor
 {- ORMOLU_ENABLE -}
 
 {-
@@ -30,7 +31,7 @@ mapFromNestedLists = Map.fromList . attachCoords 0 0
   where
     attachCoords _ _ [] = []
     attachCoords x _ ([] : ls) = attachCoords (x + 1) 0 ls
-    attachCoords x y ((l : ls) : lss) = ((x, y), l) : (attachCoords x (y + 1) (ls : lss))
+    attachCoords x y ((l : ls) : lss) = ((x, y), l) : attachCoords x (y + 1) (ls : lss)
 
 -- Splits a list into chunks of the specified size.
 -- The final chunk may be smaller than the chunk size.
@@ -38,9 +39,9 @@ mapFromNestedLists = Map.fromList . attachCoords 0 0
 chunksOf :: Int -> [a] -> [[a]]
 chunksOf n ls
   | n <= 0 = error "Cannot split into chunks of negative length."
-  | length ls == 0 = []
+  | null ls = []
   | length ls < n = [ls]
-  | otherwise = (take n ls) : (chunksOf n (drop n ls))
+  | otherwise = take n ls : chunksOf n (drop n ls)
 
 converge :: Eq a => (a -> a) -> a -> a
 converge = until =<< ((==) =<<)
@@ -50,3 +51,6 @@ pairWith f = fmap (\x -> (x,f x))
 
 pair :: [a] -> [(a,a)]
 pair = pairWith id
+
+both :: Bifunctor x => (a -> b) -> x a a -> x b b 
+both f = bimap f f
