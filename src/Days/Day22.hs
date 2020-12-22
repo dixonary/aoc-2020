@@ -30,7 +30,6 @@ inputParser = do
   deck2 <- decimal `sepEndBy1` endOfLine
   return (Seq.fromList deck1, Seq.fromList deck2)
 
-
 ------------ TYPES ------------
 type Input = (Deck,Deck)
 
