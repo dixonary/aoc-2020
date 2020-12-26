@@ -10,6 +10,7 @@ import qualified Data.Set as Set
 import Data.Vector (Vector)
 import qualified Data.Vector as Vec
 import qualified Util.Util as U
+import qualified Util.Parsers as U
 
 import qualified Program.RunDay as R (runDay, DayRunner)
 import Data.Attoparsec.Text
@@ -21,15 +22,24 @@ runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------
 inputParser :: Parser Input
-inputParser = error "Not implemented yet!"
+inputParser = decimal `U.around` endOfLine
 
 ------------ TYPES ------------
-type Input = Void
+type Input = (Int,Int)
+
+step :: Int -> Int -> Int 
+step subject x = subject*x `mod` 20201227
 
 ------------ PART A ------------
-partA :: Input -> Void
-partA = error "Not implemented yet!"
+partA :: Input -> Int
+partA (x,y) = let
+  Just loopX = elemIndex x $ iterate (step 7) 1
+  in iterate (step y) 1 !! loopX
 
 ------------ PART B ------------
-partB :: Input -> Void
-partB = error "Not implemented yet!"
+partB :: Input -> Yeet
+partB = const Yeet
+
+data Yeet = Yeet
+instance Show Yeet where
+  show = const "Yeet!"
